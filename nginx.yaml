@@ -1,0 +1,53 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  labels:
+    app: nginx
+  name: nginx
+spec:
+  replicas: 3
+  selector:
+    matchLabels:
+      app: nginx
+  template:
+    metadata:
+      labels:
+        app: nginx
+    spec:
+      containers:
+      - image: docker.io/skandpurohit/nginx:1.0.6
+        name: nginxtmccd
+---
+apiVersion: v1
+kind: Service
+metadata:
+  labels:
+    app: nginx
+  name: nginx
+spec:
+  ports:
+  - port: 80
+    protocol: TCP
+    targetPort: 80
+  selector:
+    app: nginx
+  sessionAffinity: None
+  type: ClusterIP
+---
+apiVersion: projectcontour.io/v1
+kind: HTTPProxy
+metadata:
+  name: rewrite-example
+spec:
+  virtualhost:
+    fqdn: a975df3ab3fea4fdda39dc6e0f49a617-586257453.us-west-2.elb.amazonaws.com
+  routes:
+  - services:
+    - name: nginx
+      port: 80
+    conditions:
+    - prefix: /tmc/cd/demo
+    pathRewritePolicy:
+      replacePrefix:
+      - prefix: /tmc/cd/demo
+        replacement: /
